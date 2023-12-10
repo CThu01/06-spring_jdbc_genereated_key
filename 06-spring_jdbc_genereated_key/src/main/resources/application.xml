@@ -19,6 +19,10 @@
 		<constructor-arg ref="datasource"></constructor-arg>
 	</bean>
 	
+	<bean id="nameParameterTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<constructor-arg ref="datasource"></constructor-arg>
+	</bean>
+	
 	<bean id="insert" class="org.springframework.jdbc.core.simple.SimpleJdbcInsert">
 		<constructor-arg ref="jdbcTemplate"></constructor-arg>
 		<property name="tableName" value="category"></property>
