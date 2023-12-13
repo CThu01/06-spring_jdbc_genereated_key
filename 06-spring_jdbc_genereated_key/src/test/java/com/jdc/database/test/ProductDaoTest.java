@@ -18,6 +18,7 @@ import com.jdc.database.config.ApplicationConfig;
 import com.jdc.database.model.dao.CategoryDao;
 import com.jdc.database.model.dao.ProductDao;
 import com.jdc.database.model.dto.Product;
+import com.jdc.database.model.dto.ProductCategory;
 
 //@SpringJUnitConfig(locations = "/application.xml")
 @SpringJUnitConfig(classes = ApplicationConfig.class)
@@ -56,7 +57,10 @@ public class ProductDaoTest {
 		Product product = productDao.findyById(1);
 		assertNotNull(product);
 		assertEquals("Pizza", product.getName());
+		assertEquals("Food", product.getCategory_id().getName());
 		assertEquals(8000, product.getPrice());
+		
+		assertNull(productDao.findyById(2));
 	}
 	
 	@Test
@@ -76,8 +80,8 @@ public class ProductDaoTest {
 	void test4() {
 		List<Product> product = productDao.search("Pizza");
 		assertEquals(1,product.size());
-		assertEquals(1, productDao.search("Food"));
-		assertEquals(1, productDao.search("Pizzae"));
+		assertEquals(1, productDao.search("Food").size());
+		assertTrue(productDao.search("Pizzae").isEmpty());
 	}
 	
 	@Test

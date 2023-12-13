@@ -3,16 +3,16 @@ package com.jdc.database.model.dao;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.swing.tree.RowMapper;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 
+import com.jdc.database.model.dto.Category;
 import com.jdc.database.model.dto.Product;
 
 @Repository
@@ -20,6 +20,9 @@ public class ProductDao {
 
 	@Autowired
 	private NamedParameterJdbcOperations nameJdbcOperation;
+	
+	@Autowired
+	private CategoryDao categoryDao;
 	
 	@Value("${dml.product.create}")
 	private String create;
@@ -35,15 +38,33 @@ public class ProductDao {
 	@Value("${dml.product.search}")
 	private String search;
 	
-	private BeanPropertyRowMapper<Product> rowMapper;
+	private RowMapper<Product> rowMapper;
 	
 	public ProductDao() {
-		this.rowMapper = new BeanPropertyRowMapper<Product>(Product.class);
+//		rowMapper = new BeanPropertyRowMapper<Product>(Product.class);
 	}
+	
+	public RowMapper<Product> productDetailRowMapper(){
+		return (resultSet,row) -> {
+			var p = new Product();
+			p.setId(resultSet.getInt("id"));
+			p.setName(resultSet.getString("name"));
+			p.setPrice(resultSet.getInt("price"));
+			
+			var c = new Category();
+			c.setId(resultSet.getInt("catID"));
+			c.setName(resultSet.getString("catName"));
+			
+			p.setCategory_id(c);
+			return p;
+		};
+	}
+	
 	
 	public int create(Product p) {
 		var key = new GeneratedKeyHolder();
 		var params = new MapSqlParameterSource();
+		 
 		params.addValue("name", p.getName());
 		params.addValue("category_id", p.getCategory_id().getId());
 		params.addValue("price", p.getPrice());
@@ -53,24 +74,23 @@ public class ProductDao {
 	}
 
 	public Product findyById(int id) {
-		
 		var params = new HashMap<String, Object>();
 		params.put("id", id);
-		return nameJdbcOperation.queryForObject(findById, params, rowMapper);
+		return nameJdbcOperation.queryForStream(findById, params, productDetailRowMapper()).findFirst().orElseGet( () -> null);
 	}
 
 	public List<Product> findByCategory(int categoryid) {
 		var params = new HashMap<String, Object>();
 		params.put("category_id", categoryid);
 		
-		return nameJdbcOperation.query(findById, params, rowMapper);
+		return nameJdbcOperation.query(findByCategory, params, productDetailRowMapper());
 	}
 
 	public List<Product> search(String keyword) {
 		var params = new HashMap<String, Object>();
-		params.put("keyword", keyword);
+		params.put("keyword", keyword.toLowerCase().concat("%"));
 		
-		return nameJdbcOperation.query(findById, params, rowMapper);
+		return nameJdbcOperation.query(search, params, productDetailRowMapper());
 	}
 
 	public int update(Product product) {
